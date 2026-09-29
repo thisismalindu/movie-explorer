@@ -10,8 +10,8 @@ const toBase64 = (bytes) => btoa(String.fromCharCode(...bytes));
 const fromBase64 = (value) => Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
 
 function requireCrypto() {
-  if (!globalThis.crypto?.subtle) throw new Error('Web Crypto is unavailable in this browser.');
-  return globalThis.crypto;
+  if (!window.crypto?.subtle) throw new Error('Web Crypto is unavailable in this browser.');
+  return window.crypto;
 }
 
 function validateCredentials(username, password) {
