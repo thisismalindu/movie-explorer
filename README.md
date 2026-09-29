@@ -1,6 +1,6 @@
 # Movie Explorer
 
-The frontend foundation is under construction.
+The frontend foundation is under construction. Movie data is provided by TMDb.
 
 ## Setup
 
@@ -10,6 +10,10 @@ npm start
 ```
 
 Run `npm test` for tests and `npm run build` to create a production build.
+
+## TMDb API setup
+
+Create a TMDb account and obtain an API Read Access Token from your account's API settings. Copy `.env.example` to `.env.local`, add the token to `REACT_APP_TMDB_READ_ACCESS_TOKEN`, and restart the development server. CRA embeds frontend environment variables in the browser bundle, so this token is visible to app users; it is not a server-side secret.
 
 ## Create React App
 
