@@ -30,7 +30,7 @@ test.each([
   ['/', 'Movie Explorer'],
   ['/movies/42', 'Movie Details'],
   ['/favorites', 'Favorites'],
-  ['/login', 'Login'],
+  ['/login', 'Log in'],
 ])('shows %s page', async (path, heading) => {
   renderApp(path);
   expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
