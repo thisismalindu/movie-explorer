@@ -1,9 +1,11 @@
 import Card from '@mui/material/Card';
 import CardActionArea from '@mui/material/CardActionArea';
+import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink } from 'react-router-dom';
 import MoviePoster from './MoviePoster';
+import FavoriteButton from './FavoriteButton';
 
 export default function MovieCard({ movie }) {
   const year = movie.release_date?.slice(0, 4) || 'Release date unavailable';
@@ -21,6 +23,7 @@ export default function MovieCard({ movie }) {
           <Typography color="text.secondary">Rating: {rating}</Typography>
         </CardContent>
       </CardActionArea>
+      <CardActions><FavoriteButton movie={movie} /></CardActions>
     </Card>
   );
 }

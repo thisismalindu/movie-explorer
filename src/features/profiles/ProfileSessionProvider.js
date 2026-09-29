@@ -3,7 +3,7 @@ import Button from '@mui/material/Button';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { createProfile, openProfile, saveProfile } from './profileStorage';
-import { profileCleared, profileOpened, profileUpdated } from './profileSlice';
+import { favoriteToggled, profileCleared, profileOpened, profileUpdated } from './profileSlice';
 
 const ProfileSessionContext = createContext(null);
 export const useProfileSession = () => useContext(ProfileSessionContext);
@@ -74,6 +74,18 @@ export default function ProfileSessionProvider({ children }) {
   const create = (username, password) => openSession(createProfile, username, password);
   const unlock = (username, password) => openSession(openProfile, username, password);
 
+  function toggleFavorite(movie) {
+    if (!keyRef.current || busyRef.current) return false;
+    dispatch(favoriteToggled({
+      id: movie.id,
+      title: movie.title,
+      poster_path: movie.poster_path,
+      release_date: movie.release_date,
+      vote_average: movie.vote_average,
+    }));
+    return true;
+  }
+
   async function retrySave() {
     if (!keyRef.current || !usernameRef.current || !latestPayloadRef.current) return;
     try {
@@ -107,6 +119,7 @@ export default function ProfileSessionProvider({ children }) {
     <ProfileSessionContext.Provider value={{
       profile, isBusy, isSaving, saveError, create, unlock, logout, retrySave,
       updateProfile: (data) => dispatch(profileUpdated(data)),
+      toggleFavorite,
     }}>
       {saveError && (
         <Alert severity="error" action={<Button color="inherit" onClick={retrySave}>Retry save</Button>}>
