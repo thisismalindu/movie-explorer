@@ -2,6 +2,8 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink, NavLink, Route, Routes, useLocation } from 'react-router-dom';
@@ -58,6 +60,17 @@ export default function AppLayout() {
             ))}
             {session.profile && (
               <>
+                <FormControlLabel
+                  sx={{ color: 'inherit' }}
+                  control={(
+                    <Switch
+                      checked={session.profile.data.theme === 'dark'}
+                      onChange={(event) => session.setTheme(event.target.checked ? 'dark' : 'light')}
+                      disabled={session.isBusy}
+                    />
+                  )}
+                  label="Dark mode"
+                />
                 <Typography color="inherit" sx={{ alignSelf: 'center', px: 1 }}>
                   {session.profile.username}
                 </Typography>

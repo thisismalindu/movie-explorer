@@ -15,6 +15,9 @@ const profileSlice = createSlice({
     searchChanged: (state, action) => {
       if (state) state.data.lastSearch = action.payload;
     },
+    themeChanged: (state, action) => {
+      if (state) state.data.theme = action.payload;
+    },
     profileCleared: () => null,
   },
 });
@@ -24,6 +27,7 @@ export const {
   profileUpdated,
   favoriteToggled,
   searchChanged,
+  themeChanged,
   profileCleared,
 } = profileSlice.actions;
 export default profileSlice.reducer;

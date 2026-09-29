@@ -9,6 +9,7 @@ import {
   profileOpened,
   profileUpdated,
   searchChanged,
+  themeChanged,
 } from './profileSlice';
 
 const ProfileSessionContext = createContext(null);
@@ -98,6 +99,18 @@ export default function ProfileSessionProvider({ children }) {
     return true;
   }
 
+  function setTheme(theme) {
+    if (!keyRef.current || busyRef.current) return false;
+    dispatch(themeChanged(theme === 'dark' ? 'dark' : 'light'));
+    return true;
+  }
+
+  function updateProfile(data) {
+    if (!keyRef.current || busyRef.current) return false;
+    dispatch(profileUpdated(data));
+    return true;
+  }
+
   async function retrySave() {
     if (!keyRef.current || !usernameRef.current || !latestPayloadRef.current) return;
     try {
@@ -130,9 +143,10 @@ export default function ProfileSessionProvider({ children }) {
   return (
     <ProfileSessionContext.Provider value={{
       profile, isBusy, isSaving, saveError, create, unlock, logout, retrySave,
-      updateProfile: (data) => dispatch(profileUpdated(data)),
+      updateProfile,
       toggleFavorite,
       setLastSearch,
+      setTheme,
     }}>
       {saveError && (
         <Alert severity="error" action={<Button color="inherit" onClick={retrySave}>Retry save</Button>}>

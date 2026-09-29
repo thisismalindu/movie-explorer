@@ -21,7 +21,7 @@ This project uses Create React App to comply with the assignment's explicit setu
 
 ## Local profiles
 
-Create a profile or log in with a username and password to unlock encrypted data stored in this browser. Refreshing locks the profile again. Usernames are visible storage identifiers; passwords are never stored. Clearing browser storage deletes profiles, and forgotten passwords cannot be recovered. Encryption does not protect an unlocked profile from malicious app scripts or prevent offline password guessing. Favorites and preference controls are planned; no server authentication or cloud storage is used.
+Create a profile or log in with a username and password to unlock encrypted data stored in this browser. Refreshing locks the profile again. Usernames are visible storage identifiers; passwords are never stored. Clearing browser storage deletes profiles, and forgotten passwords cannot be recovered. Encryption does not protect an unlocked profile from malicious app scripts or prevent offline password guessing. No server authentication or cloud storage is used.
 
 ## Implemented browsing features
 
@@ -29,3 +29,5 @@ Create a profile or log in with a username and password to unlock encrypted data
 - Movie search from `/search/movie`, including paginated results.
 - Movie details, credits, and videos from `/movie/{id}?append_to_response=credits,videos`.
 - Local profile creation, login, and logout using browser encryption.
+- Per-profile favorite movies, last submitted search, and light/dark theme preference.
+- Saved search restores once after login; an explicit URL query takes precedence.
