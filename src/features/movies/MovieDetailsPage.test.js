@@ -67,8 +67,8 @@ test('shows movie details, the first ten cast members, and the official YouTube 
   );
   expect(screen.getByRole('link', { name: 'Log in to save' })).toHaveAttribute('href', '/login');
   expect(axios.get).toHaveBeenCalledWith(
-    'https://api.themoviedb.org/3/movie/42',
-    expect.objectContaining({ params: { append_to_response: 'credits,videos', language: 'en-US' } })
+    '/api/tmdb',
+    expect.objectContaining({ params: { path: '/movie/42', append_to_response: 'credits,videos', language: 'en-US' } })
   );
 });
 

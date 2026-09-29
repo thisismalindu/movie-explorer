@@ -4,19 +4,11 @@ import { axiosBaseQuery } from './movieApi';
 jest.mock('axios', () => ({ get: jest.fn() }));
 
 describe('TMDb request setup', () => {
-  const originalToken = process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN;
-
   afterEach(() => {
     axios.get.mockReset();
-    if (originalToken === undefined) {
-      delete process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN;
-    } else {
-      process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN = originalToken;
-    }
   });
 
-  test('sends a bearer token and cancellation signal', async () => {
-    process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN = 'test-token';
+  test('calls the same-origin proxy and forwards cancellation', async () => {
     const signal = new AbortController().signal;
     axios.get.mockResolvedValue({ data: { results: [] } });
 
@@ -25,17 +17,15 @@ describe('TMDb request setup', () => {
     ).resolves.toEqual({ data: { results: [] } });
 
     expect(axios.get).toHaveBeenCalledWith(
-      'https://api.themoviedb.org/3/trending/movie/week',
+      '/api/tmdb',
       expect.objectContaining({
-        params: { language: 'en-US' },
+        params: { path: '/trending/movie/week', language: 'en-US' },
         signal,
-        headers: { Authorization: 'Bearer test-token' },
       })
     );
   });
 
   test('returns a serializable API error', async () => {
-    process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN = 'test-token';
     axios.get.mockRejectedValue({ response: { status: 401, data: { status_message: 'Invalid token' } } });
 
     await expect(axiosBaseQuery({ url: '/trending/movie/week' }, {})).resolves.toEqual({
@@ -43,12 +33,9 @@ describe('TMDb request setup', () => {
     });
   });
 
-  test('does not make an unauthenticated request when the token is missing', async () => {
-    delete process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN;
-
-    await expect(axiosBaseQuery({ url: '/trending/movie/week' }, {})).resolves.toEqual({
-      error: { status: 'CUSTOM_ERROR', data: 'TMDb access token is not configured.' },
-    });
-    expect(axios.get).not.toHaveBeenCalled();
+  test('does not send credentials from the browser', async () => {
+    axios.get.mockResolvedValue({ data: {} });
+    await axiosBaseQuery({ url: '/trending/movie/week' }, {});
+    expect(axios.get.mock.calls[0][1].headers).toBeUndefined();
   });
 });

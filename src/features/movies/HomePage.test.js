@@ -80,9 +80,9 @@ test('submits a trimmed query to the URL and requests the first results page', a
 
   await waitFor(() => expect(screen.getByTestId('location-search')).toHaveTextContent('?q=alien'));
   await waitFor(() => expect(axios.get).toHaveBeenCalledWith(
-    'https://api.themoviedb.org/3/search/movie',
+    '/api/tmdb',
     expect.objectContaining({
-      params: { query: 'alien', page: 1, include_adult: false, language: 'en-US' },
+      params: { path: '/search/movie', query: 'alien', page: 1, include_adult: false, language: 'en-US' },
     })
   ));
 });
@@ -116,8 +116,8 @@ test('loads another page when the results sentinel enters view', async () => {
 
   expect(await screen.findByRole('link', { name: /Arrival sequel/ })).toBeInTheDocument();
   expect(axios.get).toHaveBeenLastCalledWith(
-    'https://api.themoviedb.org/3/search/movie',
-    expect.objectContaining({ params: expect.objectContaining({ query: 'alien', page: 2 }) })
+    '/api/tmdb',
+    expect.objectContaining({ params: expect.objectContaining({ path: '/search/movie', query: 'alien', page: 2 }) })
   );
 });
 

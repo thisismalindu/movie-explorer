@@ -1,22 +1,11 @@
 import axios from 'axios';
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-const baseUrl = 'https://api.themoviedb.org/3';
-
 export async function axiosBaseQuery({ url, params }, { signal }) {
-  const token = process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN;
-
-  if (!token) {
-    return {
-      error: { status: 'CUSTOM_ERROR', data: 'TMDb access token is not configured.' },
-    };
-  }
-
   try {
-    const response = await axios.get(`${baseUrl}${url}`, {
-      params,
+    const response = await axios.get('/api/tmdb', {
+      params: { path: url, ...params },
       signal,
-      headers: { Authorization: `Bearer ${token}` },
     });
     return { data: response.data };
   } catch (error) {
