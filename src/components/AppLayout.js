@@ -7,7 +7,8 @@ import Typography from '@mui/material/Typography';
 import { Link as RouterLink, NavLink, Route, Routes } from 'react-router-dom';
 import FavoritesPage from '../features/favorites/FavoritesPage';
 import LoginPage from '../features/profiles/LoginPage';
-import { HomePage, MovieDetailsPage } from '../features/movies/MoviePages';
+import HomePage from '../features/movies/HomePage';
+import MovieDetailsPage from '../features/movies/MovieDetailsPage';
 
 function NotFoundPage() {
   return (
