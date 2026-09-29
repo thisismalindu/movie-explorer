@@ -36,7 +36,13 @@ export const movieApi = createApi({
     getTrendingMovies: builder.query({
       query: () => ({ url: '/trending/movie/week', params: { language: 'en-US' } }),
     }),
+    searchMovies: builder.query({
+      query: (query) => ({
+        url: '/search/movie',
+        params: { query, page: 1, include_adult: false, language: 'en-US' },
+      }),
+    }),
   }),
 });
 
-export const { useGetTrendingMoviesQuery } = movieApi;
+export const { useGetTrendingMoviesQuery, useSearchMoviesQuery } = movieApi;

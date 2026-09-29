@@ -1,16 +1,21 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import axios from 'axios';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { createAppStore } from '../../app/store';
 import HomePage from './HomePage';
 
 jest.mock('axios', () => ({ get: jest.fn() }));
 
-function renderHome() {
+function LocationSearch() {
+  return <output data-testid="location-search">{useLocation().search}</output>;
+}
+
+function renderHome(path = '/') {
   return render(
     <Provider store={createAppStore()}>
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <LocationSearch />
         <HomePage />
       </MemoryRouter>
     </Provider>
@@ -60,4 +65,34 @@ test('shows an error and retries the trending request', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'Retry' }));
 
   expect(await screen.findByRole('link', { name: /Arrival/ })).toBeInTheDocument();
+});
+
+test('submits a trimmed query to the URL and requests the first results page', async () => {
+  axios.get.mockResolvedValue({ data: { results: [] } });
+  renderHome();
+
+  fireEvent.change(screen.getByRole('textbox', { name: 'Search movies' }), {
+    target: { value: '  alien  ' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+  await waitFor(() => expect(screen.getByTestId('location-search')).toHaveTextContent('?q=alien'));
+  await waitFor(() => expect(axios.get).toHaveBeenCalledWith(
+    'https://api.themoviedb.org/3/search/movie',
+    expect.objectContaining({
+      params: { query: 'alien', page: 1, include_adult: false, language: 'en-US' },
+    })
+  ));
+});
+
+test('uses a search query from the URL and clears it back to trending', async () => {
+  axios.get.mockResolvedValue({ data: { results: [] } });
+  renderHome('/?q=alien');
+
+  expect(await screen.findByDisplayValue('alien')).toBeInTheDocument();
+  expect(screen.getByRole('heading', { level: 2, name: 'Search results' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+
+  await waitFor(() => expect(screen.getByTestId('location-search')).toHaveTextContent(''));
+  expect(await screen.findByRole('heading', { level: 2, name: 'Trending this week' })).toBeInTheDocument();
 });
