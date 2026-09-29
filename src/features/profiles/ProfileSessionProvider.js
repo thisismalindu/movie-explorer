@@ -2,7 +2,9 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
-import { createProfile, openProfile, saveProfile } from './profileStorage';
+import {
+  createProfile, encodeKeyMaterial, openProfile, openProfileWithKey, saveProfile,
+} from './profileStorage';
 import {
   favoriteToggled,
   profileCleared,
@@ -13,6 +15,7 @@ import {
 } from './profileSlice';
 
 const ProfileSessionContext = createContext(null);
+const SESSION_KEY = 'movie-explorer:session';
 export const useProfileSession = () => useContext(ProfileSessionContext);
 
 export default function ProfileSessionProvider({ children }) {
@@ -29,6 +32,44 @@ export default function ProfileSessionProvider({ children }) {
   const [isBusy, setIsBusy] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [isRestoring, setIsRestoring] = useState(true);
+  const [sessionWarning, setSessionWarning] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    async function restoreSession() {
+      let saved;
+      try {
+        saved = sessionStorage.getItem(SESSION_KEY);
+      } catch {
+        if (active) setSessionWarning('This browser cannot retain the unlocked profile after refresh.');
+      }
+      if (!saved) {
+        if (active) setIsRestoring(false);
+        return;
+      }
+      try {
+        const session = JSON.parse(saved);
+        if (session.version !== 1 || typeof session.username !== 'string' || typeof session.key !== 'string') {
+          throw new Error('Invalid session');
+        }
+        const opened = await openProfileWithKey(session.username, session.key);
+        if (!active) return;
+        keyRef.current = opened.key;
+        usernameRef.current = opened.username;
+        latestPayloadRef.current = opened.payload;
+        lastObservedRef.current = JSON.stringify(opened.payload);
+        dispatch(profileOpened({ username: opened.username, data: opened.payload }));
+      } catch {
+        try { sessionStorage.removeItem(SESSION_KEY); } catch { /* show logged-out state */ }
+        if (active) setSessionWarning('The saved session could not be restored. Please log in again.');
+      } finally {
+        if (active) setIsRestoring(false);
+      }
+    }
+    restoreSession();
+    return () => { active = false; };
+  }, [dispatch]);
 
   function enqueueSave(username, key, data) {
     const snapshot = JSON.parse(JSON.stringify(data));
@@ -60,6 +101,7 @@ export default function ProfileSessionProvider({ children }) {
   }), [store]);
 
   async function openSession(operation, username, password) {
+    if (isRestoring) throw new Error('Please wait while the saved profile is restored.');
     if (busyRef.current || keyRef.current) throw new Error('Log out before opening another profile.');
     busyRef.current = true;
     setIsBusy(true);
@@ -70,6 +112,16 @@ export default function ProfileSessionProvider({ children }) {
       latestPayloadRef.current = opened.payload;
       lastObservedRef.current = JSON.stringify(opened.payload);
       setSaveError('');
+      try {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+          version: 1,
+          username: opened.username,
+          key: encodeKeyMaterial(opened.keyMaterial),
+        }));
+        setSessionWarning('');
+      } catch {
+        setSessionWarning('This browser cannot retain the unlocked profile after refresh.');
+      }
       dispatch(profileOpened({ username: opened.username, data: opened.payload }));
       return { username: opened.username, data: opened.payload };
     } finally {
@@ -121,17 +173,24 @@ export default function ProfileSessionProvider({ children }) {
   }
 
   async function logout() {
-    if (!keyRef.current || busyRef.current) return;
+    if (!keyRef.current || busyRef.current || isRestoring) return;
     busyRef.current = true;
     setIsBusy(true);
     try {
       await queueRef.current;
+      try {
+        sessionStorage.removeItem(SESSION_KEY);
+      } catch {
+        setSessionWarning('Could not clear the saved tab session. Close this tab to lock the profile.');
+        return;
+      }
       keyRef.current = null;
       usernameRef.current = null;
       latestPayloadRef.current = null;
       lastObservedRef.current = null;
       setSaveError('');
       dispatch(profileCleared());
+      setSessionWarning('');
     } catch {
       // Keep the profile unlocked so its latest data can be retried.
     } finally {
@@ -142,7 +201,8 @@ export default function ProfileSessionProvider({ children }) {
 
   return (
     <ProfileSessionContext.Provider value={{
-      profile, isBusy, isSaving, saveError, create, unlock, logout, retrySave,
+    profile, isBusy, isSaving, saveError, isRestoring, sessionWarning,
+    create, unlock, logout, retrySave,
       updateProfile,
       toggleFavorite,
       setLastSearch,
@@ -153,6 +213,7 @@ export default function ProfileSessionProvider({ children }) {
           {saveError}
         </Alert>
       )}
+      {sessionWarning && <Alert severity="warning">{sessionWarning}</Alert>}
       {children}
     </ProfileSessionContext.Provider>
   );

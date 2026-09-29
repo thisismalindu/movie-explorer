@@ -64,6 +64,10 @@ export default function LoginPage() {
     }
   }
 
+  if (session?.isRestoring) {
+    return <Typography component="h1" variant="h5">Restoring profile…</Typography>;
+  }
+
   if (session?.profile) {
     return (
       <Stack spacing={2}>

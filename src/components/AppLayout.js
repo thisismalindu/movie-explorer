@@ -45,7 +45,7 @@ export default function AppLayout() {
             {[
               ['Home', '/', true],
               ['Favorites', '/favorites'],
-              ...(!session.profile ? [['Login', loginPath]] : []),
+              ...(!session.profile && !session.isRestoring ? [['Login', loginPath]] : []),
             ].map(([label, to, end]) => (
               <Button
                 key={to}
@@ -58,6 +58,7 @@ export default function AppLayout() {
                 {label}
               </Button>
             ))}
+            {session.isRestoring && <Typography color="inherit" sx={{ alignSelf: 'center', px: 1 }}>Restoring profile…</Typography>}
             {session.profile && (
               <>
                 <FormControlLabel

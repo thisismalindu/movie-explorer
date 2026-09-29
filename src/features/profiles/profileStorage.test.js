@@ -1,4 +1,4 @@
-import { createProfile, openProfile, saveProfile } from './profileStorage';
+import { createProfile, openProfile, openProfileWithKey, saveProfile } from './profileStorage';
 
 beforeEach(() => localStorage.clear());
 
@@ -12,6 +12,16 @@ test('creates, updates, and reopens an encrypted profile', async () => {
     payload: updated,
   });
   expect(localStorage.getItem('movie-explorer:profile:alex')).not.toContain('arrival');
+});
+
+test('restores a profile from its derived key without changing the encrypted record', async () => {
+  const profile = await createProfile('alex', 'password');
+  await saveProfile('alex', profile.key, { ...profile.payload, theme: 'dark' });
+  const stored = localStorage.getItem('movie-explorer:profile:alex');
+  const restored = await openProfileWithKey(profile.username, profile.keyMaterial);
+
+  expect(restored.payload.theme).toBe('dark');
+  expect(localStorage.getItem('movie-explorer:profile:alex')).toBe(stored);
 });
 
 test('rejects a wrong password without changing the stored record', async () => {
