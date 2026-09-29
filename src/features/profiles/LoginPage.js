@@ -4,6 +4,7 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { normalizeUsername } from './profileStorage';
@@ -73,7 +74,7 @@ export default function LoginPage() {
       <Stack spacing={2}>
         <Typography component="h1" variant="h4">Local profile</Typography>
         <Typography>Signed in as {session.profile.username}</Typography>
-        <Button variant="contained" onClick={session.logout} disabled={session.isBusy}>Log out</Button>
+        <Button variant="contained" onClick={session.logout} disabled={session.isBusy} startIcon={<LogoutIcon />}>Log out</Button>
       </Stack>
     );
   }
