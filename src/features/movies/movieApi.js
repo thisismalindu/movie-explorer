@@ -50,7 +50,17 @@ export const movieApi = createApi({
         params: { query: queryArg, page: pageParam, include_adult: false, language: 'en-US' },
       }),
     }),
+    getMovieDetails: builder.query({
+      query: (movieId) => ({
+        url: `/movie/${movieId}`,
+        params: { append_to_response: 'credits,videos', language: 'en-US' },
+      }),
+    }),
   }),
 });
 
-export const { useGetTrendingMoviesQuery, useSearchMoviesInfiniteQuery } = movieApi;
+export const {
+  useGetTrendingMoviesQuery,
+  useSearchMoviesInfiniteQuery,
+  useGetMovieDetailsQuery,
+} = movieApi;

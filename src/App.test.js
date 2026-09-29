@@ -8,6 +8,10 @@ import { createAppStore } from './app/store';
 jest.mock('axios', () => ({ get: jest.fn() }));
 
 function renderApp(path = '/') {
+  if (path.startsWith('/movies/')) {
+    axios.get.mockResolvedValue({ data: { title: 'Movie Details' } });
+  }
+
   return render(
     <Provider store={createAppStore()}>
       <MemoryRouter initialEntries={[path]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -27,9 +31,9 @@ test.each([
   ['/movies/42', 'Movie Details'],
   ['/favorites', 'Favorites'],
   ['/login', 'Login'],
-])('shows %s page', (path, heading) => {
+])('shows %s page', async (path, heading) => {
   renderApp(path);
-  expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+  expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
 });
 
 test('navigates to favorites and marks the active link', () => {

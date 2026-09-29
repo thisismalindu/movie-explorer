@@ -1,6 +1,6 @@
 # Movie Explorer
 
-The frontend foundation is under construction. Movie data is provided by TMDb.
+Movie Explorer browses trending movies, searches TMDb with infinite scrolling, and shows movie details, cast, and trailer links. Movie data is provided by TMDb.
 
 ## Setup
 
@@ -22,3 +22,9 @@ This project uses Create React App to comply with the assignment's explicit setu
 ## Planned local profiles
 
 Username and password will unlock a profile encrypted in this browser. Favorites and preferences will stay local; there will be no server authentication or cloud storage. After a refresh, users must unlock the profile again. Forgotten passwords cannot be recovered, and clearing browser storage deletes the profile.
+
+## Implemented browsing features
+
+- Weekly trending movies from `/trending/movie/week`.
+- Movie search from `/search/movie`, including paginated results.
+- Movie details, credits, and videos from `/movie/{id}?append_to_response=credits,videos`.
