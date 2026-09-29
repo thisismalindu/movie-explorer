@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import axios from 'axios';
 import { Provider } from 'react-redux';
+import { mockAllIsIntersecting } from 'react-intersection-observer/test-utils';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { createAppStore } from '../../app/store';
 import HomePage from './HomePage';
@@ -33,6 +34,7 @@ const arrival = {
 beforeEach(() => {
   process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN = 'test-token';
   axios.get.mockReset();
+  mockAllIsIntersecting(false);
 });
 
 test('renders movie information and links the card to its detail route', async () => {
@@ -95,4 +97,71 @@ test('uses a search query from the URL and clears it back to trending', async ()
 
   await waitFor(() => expect(screen.getByTestId('location-search')).toHaveTextContent(''));
   expect(await screen.findByRole('heading', { level: 2, name: 'Trending this week' })).toBeInTheDocument();
+});
+
+test('loads another page when the results sentinel enters view', async () => {
+  axios.get
+    .mockResolvedValueOnce({ data: { page: 1, total_pages: 2, results: [arrival] } })
+    .mockResolvedValueOnce({
+      data: {
+        page: 2,
+        total_pages: 2,
+        results: [{ ...arrival, id: 2, title: 'Arrival sequel' }],
+      },
+    });
+  renderHome('/?q=alien');
+  expect(await screen.findByRole('link', { name: /Arrival/ })).toBeInTheDocument();
+
+  mockAllIsIntersecting(true);
+
+  expect(await screen.findByRole('link', { name: /Arrival sequel/ })).toBeInTheDocument();
+  expect(axios.get).toHaveBeenLastCalledWith(
+    'https://api.themoviedb.org/3/search/movie',
+    expect.objectContaining({ params: expect.objectContaining({ query: 'alien', page: 2 }) })
+  );
+});
+
+test('does not request another page after the last result page', async () => {
+  axios.get.mockResolvedValue({ data: { page: 1, total_pages: 1, results: [arrival] } });
+  renderHome('/?q=alien');
+  expect(await screen.findByRole('link', { name: /Arrival/ })).toBeInTheDocument();
+
+  mockAllIsIntersecting(true);
+
+  expect(axios.get).toHaveBeenCalledTimes(1);
+});
+
+test('does not request duplicate pages for repeated observer notifications', async () => {
+  let resolveNextPage;
+  const pendingPage = new Promise((resolve) => { resolveNextPage = resolve; });
+  axios.get
+    .mockResolvedValueOnce({ data: { page: 1, total_pages: 2, results: [arrival] } })
+    .mockReturnValueOnce(pendingPage);
+  renderHome('/?q=alien');
+  expect(await screen.findByRole('link', { name: /Arrival poster/ })).toBeInTheDocument();
+
+  mockAllIsIntersecting(true);
+  await waitFor(() => expect(axios.get).toHaveBeenCalledTimes(2));
+  mockAllIsIntersecting(true);
+  expect(axios.get).toHaveBeenCalledTimes(2);
+
+  resolveNextPage({ data: { page: 2, total_pages: 2, results: [] } });
+  await waitFor(() => expect(screen.queryByLabelText('Loading more movies')).not.toBeInTheDocument());
+});
+
+test('keeps first-page results and retries a failed next page', async () => {
+  axios.get
+    .mockResolvedValueOnce({ data: { page: 1, total_pages: 2, results: [arrival] } })
+    .mockRejectedValueOnce({ response: { status: 503, data: {} } })
+    .mockResolvedValueOnce({
+      data: { page: 2, total_pages: 2, results: [{ ...arrival, id: 2, title: 'Arrival sequel' }] },
+    });
+  renderHome('/?q=alien');
+  expect(await screen.findByRole('link', { name: /Arrival/ })).toBeInTheDocument();
+  mockAllIsIntersecting(true);
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+
+  expect(screen.getByRole('link', { name: /Arrival poster/ })).toBeInTheDocument();
+  expect(await screen.findByRole('link', { name: /Arrival sequel/ })).toBeInTheDocument();
 });

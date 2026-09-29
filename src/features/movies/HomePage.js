@@ -6,25 +6,42 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useEffect, useState } from 'react';
+import { useInView } from 'react-intersection-observer';
 import { useSearchParams } from 'react-router-dom';
-import { useGetTrendingMoviesQuery, useSearchMoviesQuery } from './movieApi';
+import { useGetTrendingMoviesQuery, useSearchMoviesInfiniteQuery } from './movieApi';
 import MovieGrid from './MovieGrid';
 
 export default function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q')?.trim() || '';
   const [searchInput, setSearchInput] = useState(query);
+  const { ref: sentinelRef, inView } = useInView();
   const trending = useGetTrendingMoviesQuery(undefined, { skip: Boolean(query) });
-  const search = useSearchMoviesQuery(query, { skip: !query });
-  const currentData = query ? search.currentData : trending.currentData;
-  const movies = currentData?.results;
+  const search = useSearchMoviesInfiniteQuery(query, { skip: !query });
+  const {
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    fetchNextPage,
+  } = search;
+  const searchPages = search.currentData?.pages;
+  const searchMovies = searchPages && [...new Map(
+    searchPages.flatMap((page) => page.results).map((movie) => [movie.id, movie])
+  ).values()];
+  const movies = query ? searchMovies : trending.currentData?.results;
   const isLoading = query
     ? search.isFetching && !search.currentData
     : trending.isLoading;
-  const isError = query ? search.isError : trending.isError;
+  const isError = query ? search.isError && !search.currentData : trending.isError;
   const refetch = query ? search.refetch : trending.refetch;
 
   useEffect(() => setSearchInput(query), [query]);
+
+  useEffect(() => {
+    if (query && inView && hasNextPage && !isFetchingNextPage && !isFetchNextPageError) {
+      fetchNextPage();
+    }
+  }, [query, inView, hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage]);
 
   function submitSearch(event) {
     event.preventDefault();
@@ -69,6 +86,19 @@ export default function HomePage() {
         <Box component="section" aria-label={query ? 'Search results' : 'Trending movies'}>
           <MovieGrid movies={movies} />
         </Box>
+      )}
+      {query && hasNextPage && (
+        <Box ref={sentinelRef} aria-hidden="true" sx={{ minHeight: 1 }} />
+      )}
+      {query && isFetchingNextPage && (
+        <CircularProgress aria-label="Loading more movies" size={24} />
+      )}
+      {query && isFetchNextPageError && (
+        <Alert severity="error" action={
+          <Button color="inherit" onClick={() => fetchNextPage()}>Retry</Button>
+        }>
+          Could not load more movies.
+        </Alert>
       )}
     </Stack>
   );

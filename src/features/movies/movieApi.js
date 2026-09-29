@@ -36,13 +36,21 @@ export const movieApi = createApi({
     getTrendingMovies: builder.query({
       query: () => ({ url: '/trending/movie/week', params: { language: 'en-US' } }),
     }),
-    searchMovies: builder.query({
-      query: (query) => ({
+    searchMovies: builder.infiniteQuery({
+      infiniteQueryOptions: {
+        initialPageParam: 1,
+        getNextPageParam: (lastPage, pages, lastPageParam) => (
+          lastPageParam < Math.min(lastPage.total_pages || 1, 500)
+            ? lastPageParam + 1
+            : undefined
+        ),
+      },
+      query: ({ queryArg, pageParam }) => ({
         url: '/search/movie',
-        params: { query, page: 1, include_adult: false, language: 'en-US' },
+        params: { query: queryArg, page: pageParam, include_adult: false, language: 'en-US' },
       }),
     }),
   }),
 });
 
-export const { useGetTrendingMoviesQuery, useSearchMoviesQuery } = movieApi;
+export const { useGetTrendingMoviesQuery, useSearchMoviesInfiniteQuery } = movieApi;
