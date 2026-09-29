@@ -3,7 +3,13 @@ import Button from '@mui/material/Button';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { createProfile, openProfile, saveProfile } from './profileStorage';
-import { favoriteToggled, profileCleared, profileOpened, profileUpdated } from './profileSlice';
+import {
+  favoriteToggled,
+  profileCleared,
+  profileOpened,
+  profileUpdated,
+  searchChanged,
+} from './profileSlice';
 
 const ProfileSessionContext = createContext(null);
 export const useProfileSession = () => useContext(ProfileSessionContext);
@@ -64,7 +70,7 @@ export default function ProfileSessionProvider({ children }) {
       lastObservedRef.current = JSON.stringify(opened.payload);
       setSaveError('');
       dispatch(profileOpened({ username: opened.username, data: opened.payload }));
-      return opened.username;
+      return { username: opened.username, data: opened.payload };
     } finally {
       busyRef.current = false;
       setIsBusy(false);
@@ -83,6 +89,12 @@ export default function ProfileSessionProvider({ children }) {
       release_date: movie.release_date,
       vote_average: movie.vote_average,
     }));
+    return true;
+  }
+
+  function setLastSearch(query) {
+    if (!keyRef.current || busyRef.current) return false;
+    dispatch(searchChanged(query));
     return true;
   }
 
@@ -120,6 +132,7 @@ export default function ProfileSessionProvider({ children }) {
       profile, isBusy, isSaving, saveError, create, unlock, logout, retrySave,
       updateProfile: (data) => dispatch(profileUpdated(data)),
       toggleFavorite,
+      setLastSearch,
     }}>
       {saveError && (
         <Alert severity="error" action={<Button color="inherit" onClick={retrySave}>Retry save</Button>}>

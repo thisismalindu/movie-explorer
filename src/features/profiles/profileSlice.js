@@ -12,9 +12,18 @@ const profileSlice = createSlice({
       if (index >= 0) state.data.favorites.splice(index, 1);
       else state.data.favorites.push(action.payload);
     },
+    searchChanged: (state, action) => {
+      if (state) state.data.lastSearch = action.payload;
+    },
     profileCleared: () => null,
   },
 });
 
-export const { profileOpened, profileUpdated, favoriteToggled, profileCleared } = profileSlice.actions;
+export const {
+  profileOpened,
+  profileUpdated,
+  favoriteToggled,
+  searchChanged,
+  profileCleared,
+} = profileSlice.actions;
 export default profileSlice.reducer;
