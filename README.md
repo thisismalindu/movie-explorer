@@ -41,7 +41,7 @@ Import the repository into Vercel. Use `npm run build` as the build command, `bu
 
 ## Verification record
 
-Automated app tests, proxy tests, and the production build pass. A local browser check covered direct routes, search URL/history, profile creation and refresh restoration, logout, theme persistence, and 360px/1280px widths without horizontal overflow. Live TMDb requests through `vercel dev` could not be checked because the local Vercel CLI requires account login for this unlinked checkout.
+Automated app tests, proxy tests, and the production build pass. A local browser check covered direct routes, search URL/history, profile creation and refresh restoration, logout, theme persistence, and 360px/1280px widths without horizontal overflow. Live verification through `vercel dev` also passed: trending, search pages 1 and 2, movie details with credits/videos, and rejection of page 501. Browser checks confirmed live cards, submitted search, infinite scrolling, trailer links, and direct movie URL refresh.
 
 ## Credits
 
