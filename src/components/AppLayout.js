@@ -87,6 +87,21 @@ export default function AppLayout() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        <Box component="footer" aria-label="Credits" sx={{ mt: 5, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Typography component="h2" variant="caption" color="text.secondary" gutterBottom>Credits</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+            <a href="https://www.themoviedb.org" target="_blank" rel="noreferrer">
+              <img
+                src="https://www.themoviedb.org/assets/2/v4/logos/stacked-green.svg"
+                alt="TMDB"
+                width="52"
+              />
+            </a>
+            <Typography variant="caption" color="text.secondary">
+              This product uses the TMDB API but is not endorsed or certified by TMDB.
+            </Typography>
+          </Box>
+        </Box>
       </Container>
       <Paper component="nav" aria-label="Main navigation" elevation={3} sx={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: (theme) => theme.zIndex.appBar,
