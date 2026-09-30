@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography';
 import { useParams } from 'react-router-dom';
 import { useGetMovieDetailsQuery } from './movieApi';
 import MoviePoster from './MoviePoster';
+import FavoriteButton from './FavoriteButton';
 
 export default function MovieDetailsPage() {
   const { movieId: movieIdParam } = useParams();
@@ -51,6 +52,7 @@ export default function MovieDetailsPage() {
   return (
     <Stack spacing={2}>
       <Typography component="h1" variant="h4">{title}</Typography>
+      <FavoriteButton movie={movie} />
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(200px, 1fr) 2fr' }, gap: 2 }}>
         <Box sx={{ maxWidth: { sm: 320 } }}>
           <MoviePoster key={movie.id} path={movie.poster_path} title={title} />

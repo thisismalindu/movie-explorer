@@ -10,8 +10,10 @@ import { useInView } from 'react-intersection-observer';
 import { useSearchParams } from 'react-router-dom';
 import { useGetTrendingMoviesQuery, useSearchMoviesInfiniteQuery } from './movieApi';
 import MovieGrid from './MovieGrid';
+import { useProfileSession } from '../profiles/ProfileSessionProvider';
 
 export default function HomePage() {
+  const session = useProfileSession();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q')?.trim() || '';
   const [searchInput, setSearchInput] = useState(query);
@@ -46,11 +48,13 @@ export default function HomePage() {
   function submitSearch(event) {
     event.preventDefault();
     const nextQuery = searchInput.trim();
+    session?.setLastSearch(nextQuery);
     setSearchParams(nextQuery ? { q: nextQuery } : {});
   }
 
   function clearSearch() {
     setSearchInput('');
+    session?.setLastSearch('');
     setSearchParams({});
   }
 

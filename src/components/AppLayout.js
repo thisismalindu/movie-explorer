@@ -2,9 +2,11 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { Link as RouterLink, NavLink, Route, Routes } from 'react-router-dom';
+import { Link as RouterLink, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { useProfileSession } from '../features/profiles/ProfileSessionProvider';
 import FavoritesPage from '../features/favorites/FavoritesPage';
 import LoginPage from '../features/profiles/LoginPage';
@@ -24,6 +26,8 @@ function NotFoundPage() {
 
 export default function AppLayout() {
   const session = useProfileSession() || {};
+  const location = useLocation();
+  const loginPath = location.pathname === '/' && location.search ? `/login${location.search}` : '/login';
   return (
     <>
       <AppBar position="static">
@@ -41,7 +45,7 @@ export default function AppLayout() {
             {[
               ['Home', '/', true],
               ['Favorites', '/favorites'],
-              ...(!session.profile ? [['Login', '/login']] : []),
+              ...(!session.profile ? [['Login', loginPath]] : []),
             ].map(([label, to, end]) => (
               <Button
                 key={to}
@@ -56,6 +60,17 @@ export default function AppLayout() {
             ))}
             {session.profile && (
               <>
+                <FormControlLabel
+                  sx={{ color: 'inherit' }}
+                  control={(
+                    <Switch
+                      checked={session.profile.data.theme === 'dark'}
+                      onChange={(event) => session.setTheme(event.target.checked ? 'dark' : 'light')}
+                      disabled={session.isBusy}
+                    />
+                  )}
+                  label="Dark mode"
+                />
                 <Typography color="inherit" sx={{ alignSelf: 'center', px: 1 }}>
                   {session.profile.username}
                 </Typography>

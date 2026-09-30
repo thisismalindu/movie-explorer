@@ -3,7 +3,14 @@ import Button from '@mui/material/Button';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { createProfile, openProfile, saveProfile } from './profileStorage';
-import { profileCleared, profileOpened, profileUpdated } from './profileSlice';
+import {
+  favoriteToggled,
+  profileCleared,
+  profileOpened,
+  profileUpdated,
+  searchChanged,
+  themeChanged,
+} from './profileSlice';
 
 const ProfileSessionContext = createContext(null);
 export const useProfileSession = () => useContext(ProfileSessionContext);
@@ -64,7 +71,7 @@ export default function ProfileSessionProvider({ children }) {
       lastObservedRef.current = JSON.stringify(opened.payload);
       setSaveError('');
       dispatch(profileOpened({ username: opened.username, data: opened.payload }));
-      return opened.username;
+      return { username: opened.username, data: opened.payload };
     } finally {
       busyRef.current = false;
       setIsBusy(false);
@@ -73,6 +80,36 @@ export default function ProfileSessionProvider({ children }) {
 
   const create = (username, password) => openSession(createProfile, username, password);
   const unlock = (username, password) => openSession(openProfile, username, password);
+
+  function toggleFavorite(movie) {
+    if (!keyRef.current || busyRef.current) return false;
+    dispatch(favoriteToggled({
+      id: movie.id,
+      title: movie.title,
+      poster_path: movie.poster_path,
+      release_date: movie.release_date,
+      vote_average: movie.vote_average,
+    }));
+    return true;
+  }
+
+  function setLastSearch(query) {
+    if (!keyRef.current || busyRef.current) return false;
+    dispatch(searchChanged(query));
+    return true;
+  }
+
+  function setTheme(theme) {
+    if (!keyRef.current || busyRef.current) return false;
+    dispatch(themeChanged(theme === 'dark' ? 'dark' : 'light'));
+    return true;
+  }
+
+  function updateProfile(data) {
+    if (!keyRef.current || busyRef.current) return false;
+    dispatch(profileUpdated(data));
+    return true;
+  }
 
   async function retrySave() {
     if (!keyRef.current || !usernameRef.current || !latestPayloadRef.current) return;
@@ -106,7 +143,10 @@ export default function ProfileSessionProvider({ children }) {
   return (
     <ProfileSessionContext.Provider value={{
       profile, isBusy, isSaving, saveError, create, unlock, logout, retrySave,
-      updateProfile: (data) => dispatch(profileUpdated(data)),
+      updateProfile,
+      toggleFavorite,
+      setLastSearch,
+      setTheme,
     }}>
       {saveError && (
         <Alert severity="error" action={<Button color="inherit" onClick={retrySave}>Retry save</Button>}>

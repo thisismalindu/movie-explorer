@@ -5,13 +5,14 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { normalizeUsername } from './profileStorage';
 import { useProfileSession } from './ProfileSessionProvider';
 
 export default function LoginPage() {
   const session = useProfileSession();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -46,9 +47,14 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
     try {
-      if (isCreating) await session.create(username, password);
-      else await session.unlock(username, password);
-      navigate('/');
+      const opened = isCreating
+        ? await session.create(username, password)
+        : await session.unlock(username, password);
+      const loginParams = new URLSearchParams(location.search);
+      const search = loginParams.has('q')
+        ? loginParams.get('q')
+        : opened.data.lastSearch;
+      navigate({ pathname: '/', search: search ? `?q=${encodeURIComponent(search)}` : (loginParams.has('q') ? '?q=' : '') });
     } catch (caught) {
       setError(caught.message || 'Could not open this profile.');
     } finally {
