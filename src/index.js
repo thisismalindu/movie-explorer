@@ -7,6 +7,7 @@ import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import App from './App';
 import { store } from './app/store';
+import ProfileSessionProvider from './features/profiles/ProfileSessionProvider';
 
 const theme = createTheme();
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -15,9 +16,11 @@ root.render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Provider store={store}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <ProfileSessionProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </ProfileSessionProvider>
       </Provider>
     </ThemeProvider>
   </React.StrictMode>

@@ -5,6 +5,7 @@ import Container from '@mui/material/Container';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink, NavLink, Route, Routes } from 'react-router-dom';
+import { useProfileSession } from '../features/profiles/ProfileSessionProvider';
 import FavoritesPage from '../features/favorites/FavoritesPage';
 import LoginPage from '../features/profiles/LoginPage';
 import HomePage from '../features/movies/HomePage';
@@ -22,6 +23,7 @@ function NotFoundPage() {
 }
 
 export default function AppLayout() {
+  const session = useProfileSession() || {};
   return (
     <>
       <AppBar position="static">
@@ -39,7 +41,7 @@ export default function AppLayout() {
             {[
               ['Home', '/', true],
               ['Favorites', '/favorites'],
-              ['Login', '/login'],
+              ...(!session.profile ? [['Login', '/login']] : []),
             ].map(([label, to, end]) => (
               <Button
                 key={to}
@@ -52,6 +54,16 @@ export default function AppLayout() {
                 {label}
               </Button>
             ))}
+            {session.profile && (
+              <>
+                <Typography color="inherit" sx={{ alignSelf: 'center', px: 1 }}>
+                  {session.profile.username}
+                </Typography>
+                <Button color="inherit" onClick={session.logout} disabled={session.isBusy}>
+                  Log out
+                </Button>
+              </>
+            )}
           </Box>
         </Toolbar>
       </AppBar>
