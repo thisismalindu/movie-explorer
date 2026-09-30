@@ -62,7 +62,6 @@ function renderThemeApp() {
 }
 
 beforeEach(() => {
-  process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN = 'test-token';
   axios.get.mockResolvedValue({ data: { results: [] } });
   profiles = new Map(Object.entries(initialProfiles).map(([username, profile]) => [username, clone(profile)]));
   openProfile.mockImplementation(async (username) => {

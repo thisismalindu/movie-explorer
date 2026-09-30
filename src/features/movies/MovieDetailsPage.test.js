@@ -42,7 +42,6 @@ const movie = {
 };
 
 beforeEach(() => {
-  process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN = 'test-token';
   axios.get.mockReset();
 });
 

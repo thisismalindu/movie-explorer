@@ -39,6 +39,10 @@ Import the repository into Vercel. Use `npm run build` as the build command, `bu
 - Open Home, Favorites, Login, a movie URL, a search URL, and an unknown URL directly.
 - Use keyboard navigation and form submission; check narrow and desktop widths in both themes.
 
+## Verification record
+
+Automated app tests, proxy tests, and the production build pass. A local browser check covered direct routes, search URL/history, profile creation and refresh restoration, logout, theme persistence, and 360px/1280px widths without horizontal overflow. Live TMDb requests through `vercel dev` could not be checked because the local Vercel CLI requires account login for this unlinked checkout.
+
 ## Credits
 
 Movie data and images are provided by TMDb. This product uses the TMDB API but is not endorsed or certified by TMDB.
