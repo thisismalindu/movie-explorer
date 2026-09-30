@@ -61,7 +61,7 @@ export default function HomePage() {
   return (
     <Stack spacing={2}>
       <Typography component="h1" variant="h4">Movie Explorer</Typography>
-      <Box component="form" role="search" onSubmit={submitSearch} sx={{ display: 'flex', gap: 1 }}>
+      <Box component="form" role="search" onSubmit={submitSearch} sx={{ display: 'flex', flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 1 }}>
         <TextField
           label="Search movies"
           value={searchInput}

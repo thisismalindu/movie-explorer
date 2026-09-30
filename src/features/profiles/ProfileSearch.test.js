@@ -60,7 +60,6 @@ function login(username = 'alex') {
 
 let profiles;
 beforeEach(() => {
-  process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN = 'test-token';
   axios.get.mockResolvedValue({ data: { results: [] } });
   profiles = new Map([
     ['alex', { ...blankProfile, lastSearch: 'arrival' }],

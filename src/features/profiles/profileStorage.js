@@ -20,15 +20,21 @@ function validateCredentials(username, password) {
   return normalized;
 }
 
-async function deriveKey(password, salt, iterations = ITERATIONS) {
+export const encodeKeyMaterial = (bytes) => toBase64(bytes);
+export const decodeKeyMaterial = (value) => fromBase64(value);
+
+async function deriveKeyMaterial(password, salt, iterations = ITERATIONS) {
   const crypto = requireCrypto();
-  const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']);
-  return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations },
-    material,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt', 'decrypt']
+  const material = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const keyMaterial = new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, material, 256
+  ));
+  return keyMaterial;
+}
+
+async function importEncryptionKey(keyMaterial) {
+  return requireCrypto().subtle.importKey(
+    'raw', keyMaterial, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']
   );
 }
 
@@ -56,7 +62,8 @@ export async function createProfile(username, password) {
 
   const crypto = requireCrypto();
   const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await deriveKey(password, salt);
+  const keyMaterial = await deriveKeyMaterial(password, salt);
+  const key = await importEncryptionKey(keyMaterial);
   const payload = { favorites: [], lastSearch: '', theme: 'light' };
   const record = await encryptWithSalt(key, salt, payload);
   try {
@@ -64,7 +71,7 @@ export async function createProfile(username, password) {
   } catch {
     throw new Error('Could not save the profile in browser storage.');
   }
-  return { username: normalized, key, payload };
+  return { username: normalized, key, keyMaterial, payload };
 }
 
 async function encryptWithSalt(key, salt, payload) {
@@ -86,13 +93,32 @@ export async function openProfile(username, password) {
   const record = readRecord(normalized);
   try {
     const salt = fromBase64(record.kdf.salt);
-    const key = await deriveKey(password, salt, record.kdf.iterations);
+    const keyMaterial = await deriveKeyMaterial(password, salt, record.kdf.iterations);
+    const key = await importEncryptionKey(keyMaterial);
     const plaintext = await requireCrypto().subtle.decrypt(
       { name: 'AES-GCM', iv: fromBase64(record.cipher.iv) }, key, fromBase64(record.ciphertext)
     );
-    return { username: normalized, key, payload: JSON.parse(decoder.decode(plaintext)) };
+    return { username: normalized, key, keyMaterial, payload: JSON.parse(decoder.decode(plaintext)) };
   } catch {
     throw new Error('Unable to unlock profile. Check your password or saved profile data.');
+  }
+}
+
+export async function openProfileWithKey(username, encodedKeyMaterial) {
+  const normalized = normalizeUsername(username);
+  const keyMaterial = typeof encodedKeyMaterial === 'string'
+    ? decodeKeyMaterial(encodedKeyMaterial)
+    : encodedKeyMaterial;
+  if (!normalized || keyMaterial.length !== 32) throw new Error('The saved session is invalid.');
+  const record = readRecord(normalized);
+  try {
+    const key = await importEncryptionKey(keyMaterial);
+    const plaintext = await requireCrypto().subtle.decrypt(
+      { name: 'AES-GCM', iv: fromBase64(record.cipher.iv) }, key, fromBase64(record.ciphertext)
+    );
+    return { username: normalized, key, keyMaterial, payload: JSON.parse(decoder.decode(plaintext)) };
+  } catch {
+    throw new Error('Unable to restore profile session. Please log in again.');
   }
 }
 

@@ -2,11 +2,13 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { Provider } from 'react-redux';
 import { createAppStore } from '../../app/store';
 import ProfileSessionProvider, { useProfileSession } from './ProfileSessionProvider';
-import { createProfile, openProfile, saveProfile } from './profileStorage';
+import { createProfile, openProfile, openProfileWithKey, saveProfile } from './profileStorage';
 
 jest.mock('./profileStorage', () => ({
   createProfile: jest.fn(),
+  encodeKeyMaterial: jest.fn(() => 'derived-key-bytes'),
   openProfile: jest.fn(),
+  openProfileWithKey: jest.fn(),
   saveProfile: jest.fn(),
 }));
 
@@ -36,12 +38,16 @@ function renderSession() {
 const openedProfile = {
   username: 'alex',
   key: { type: 'secret-key' },
+  keyMaterial: new Uint8Array(32),
   payload: { favorites: [], lastSearch: '', theme: 'light' },
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
+  sessionStorage.clear();
+  require('./profileStorage').encodeKeyMaterial.mockReturnValue('derived-key-bytes');
   openProfile.mockResolvedValue(openedProfile);
+  openProfileWithKey.mockResolvedValue(openedProfile);
   createProfile.mockResolvedValue(openedProfile);
   saveProfile.mockResolvedValue();
 });
@@ -52,6 +58,21 @@ test('starts locked and does not save when a profile is opened', async () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
   expect(await screen.findByText('alex')).toBeInTheDocument();
+  expect(saveProfile).not.toHaveBeenCalled();
+});
+
+test('stores only the derived key and restores an unlocked profile after refresh', async () => {
+  const first = renderSession();
+  fireEvent.click(screen.getByRole('button', { name: 'Unlock' }));
+  await screen.findByText('alex');
+  const temporarySession = sessionStorage.getItem('movie-explorer:session');
+  expect(temporarySession).toContain('derived-key-bytes');
+  expect(temporarySession).not.toContain('password');
+  first.unmount();
+
+  renderSession();
+  expect(await screen.findByText('alex')).toBeInTheDocument();
+  expect(openProfileWithKey).toHaveBeenCalledWith('alex', 'derived-key-bytes');
   expect(saveProfile).not.toHaveBeenCalled();
 });
 
@@ -105,6 +126,7 @@ test('waits for a pending save before clearing the session on logout', async () 
 
   await act(async () => finishSave());
   await waitFor(() => expect(screen.getByText('Locked')).toBeInTheDocument());
+  expect(sessionStorage.getItem('movie-explorer:session')).toBeNull();
 });
 
 test('stays unlocked after a failed logout save and clears after retry', async () => {

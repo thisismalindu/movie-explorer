@@ -40,7 +40,6 @@ function fillCredentials({ username = ' Alex ', password = 'pass phrase', confir
 }
 
 beforeEach(() => {
-  process.env.REACT_APP_TMDB_READ_ACCESS_TOKEN = 'test-token';
   axios.get.mockResolvedValue({ data: { results: [] } });
   createProfile.mockReset().mockResolvedValue(opened);
   openProfile.mockReset().mockResolvedValue(opened);

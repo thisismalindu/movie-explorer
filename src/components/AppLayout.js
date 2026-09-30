@@ -3,10 +3,17 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
+import Paper from '@mui/material/Paper';
 import Switch from '@mui/material/Switch';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { Link as RouterLink, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useProfileSession } from '../features/profiles/ProfileSessionProvider';
 import FavoritesPage from '../features/favorites/FavoritesPage';
 import LoginPage from '../features/profiles/LoginPage';
@@ -41,23 +48,13 @@ export default function AppLayout() {
           >
             Movie Explorer
           </Typography>
-          <Box component="nav" aria-label="Primary navigation" sx={{ display: 'flex', flexWrap: 'wrap' }}>
-            {[
-              ['Home', '/', true],
-              ['Favorites', '/favorites'],
-              ...(!session.profile ? [['Login', loginPath]] : []),
-            ].map(([label, to, end]) => (
-              <Button
-                key={to}
-                component={NavLink}
-                to={to}
-                end={end}
-                color="inherit"
-                sx={{ '&[aria-current="page"]': { textDecoration: 'underline' } }}
-              >
-                {label}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+            {!session.profile && !session.isRestoring && (
+              <Button component={RouterLink} to={loginPath} color="inherit" startIcon={<LoginIcon />}>
+                Login
               </Button>
-            ))}
+            )}
+            {session.isRestoring && <Typography color="inherit" sx={{ alignSelf: 'center', px: 1 }}>Restoring profile…</Typography>}
             {session.profile && (
               <>
                 <FormControlLabel
@@ -74,7 +71,7 @@ export default function AppLayout() {
                 <Typography color="inherit" sx={{ alignSelf: 'center', px: 1 }}>
                   {session.profile.username}
                 </Typography>
-                <Button color="inherit" onClick={session.logout} disabled={session.isBusy}>
+                <Button color="inherit" onClick={session.logout} disabled={session.isBusy} startIcon={<LogoutIcon />}>
                   Log out
                 </Button>
               </>
@@ -82,7 +79,7 @@ export default function AppLayout() {
           </Box>
         </Toolbar>
       </AppBar>
-      <Container component="main" maxWidth="lg" sx={{ py: 3 }}>
+      <Container component="main" maxWidth="lg" sx={{ py: 3, pb: 'calc(88px + env(safe-area-inset-bottom))' }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/movies/:movieId" element={<MovieDetailsPage />} />
@@ -90,7 +87,34 @@ export default function AppLayout() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        <Box component="footer" aria-label="Credits" sx={{ mt: 5, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+          <Typography component="h2" variant="caption" color="text.secondary" gutterBottom>Credits</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+            <a href="https://www.themoviedb.org" target="_blank" rel="noreferrer">
+              <img
+                src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_square_2-d537fb228cf3ded904ef09b136fe3fec72548ebc1fea3fbbd1ad9e36364db38b.svg"
+                alt="TMDB"
+                width="52"
+              />
+            </a>
+            <Typography variant="caption" color="text.secondary">
+              This product uses the TMDB API but is not endorsed or certified by TMDB.
+            </Typography>
+          </Box>
+        </Box>
       </Container>
+      <Paper component="nav" aria-label="Main navigation" elevation={3} sx={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: (theme) => theme.zIndex.appBar,
+        pb: 'env(safe-area-inset-bottom)',
+      }}>
+        <BottomNavigation
+          showLabels
+          value={location.pathname === '/favorites' ? '/favorites' : location.pathname.startsWith('/movies/') || location.pathname === '/' ? '/' : false}
+        >
+          <BottomNavigationAction component={NavLink} to="/" end label="Home" value="/" icon={<HomeOutlinedIcon />} />
+          <BottomNavigationAction component={NavLink} to="/favorites" label="Favorites" value="/favorites" icon={<FavoriteBorderIcon />} />
+        </BottomNavigation>
+      </Paper>
     </>
   );
 }
